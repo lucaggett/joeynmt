@@ -212,8 +212,8 @@ class TransformerEncoder(Encoder):
         self.pe = PositionalEncoding(hidden_size)
         self.emb_dropout = nn.Dropout(p=emb_dropout)
 
-        self.layer_norm = (nn.LayerNorm(hidden_size, eps=1e-6) if kwargs.get(
-            "layer_norm", "post") == "pre" else None)
+        self.layer_norm = nn.LayerNorm(hidden_size, eps=1e-6) #if kwargs.get(
+            #"layer_norm", "post") == "pre" else None)
 
         if freeze:
             freeze_params(self)
