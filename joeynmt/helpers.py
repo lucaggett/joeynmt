@@ -154,9 +154,7 @@ def set_seed(seed: int) -> None:
     torch.manual_seed(seed)
     np.random.seed(seed)
     random.seed(seed)
-    if torch.cuda.is_available() and torch.cuda.device_count() > 0:
-        torch.backends.cudnn.deterministic = True
-        torch.cuda.manual_seed_all(seed)
+
 
 
 def load_config(path: Union[Path, str] = "configs/default.yaml") -> Dict:
@@ -207,9 +205,9 @@ def parse_train_args(cfg: Dict, mode: str = "training") -> Tuple:
     model_dir: Path = Path(cfg["model_dir"])
     assert model_dir.is_dir(), f"{model_dir} not found."
 
-    use_cuda: bool = cfg["use_cuda"] and torch.cuda.is_available()
-    device = torch.device("cuda" if use_cuda else "cpu")
-    n_gpu: int = torch.cuda.device_count() if use_cuda else 0
+    use_mps: bool = cfg["use_cuda"] and torch.backends.mps.is_available()
+    device = torch.device("mps" if use_mps else "cpu")
+    n_gpu: int = 1 if torch.backends.mps.is_available() else torch.mps.device_count()
     num_workers: int = cfg.get("num_workers", 0)
     if num_workers > 0:
         num_workers = min(cpu_count(), num_workers)
@@ -483,7 +481,7 @@ def load_checkpoint(path: Path, device: torch.device) -> Dict:
     Load model from saved checkpoint.
 
     :param path: path to checkpoint
-    :param device: cuda device name or cpu
+    :param device: mps device name or cpu
     :return: checkpoint (dict)
     """
     logger = logging.getLogger(__name__)

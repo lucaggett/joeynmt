@@ -70,13 +70,13 @@ class Batch:
             self.trg_mask: Tensor = (self.trg != pad_index).unsqueeze(1)
             self.ntokens: int = (self.trg != pad_index).data.sum().item()
 
-        if device.type == "cuda":
-            self._make_cuda(device)
+        if device.type == "mps":
+            self._make_mps(device)
 
         # a batch has to contain more than one src sentence
         assert self.nseqs > 0, self.nseqs
 
-    def _make_cuda(self, device: torch.device) -> None:
+    def _make_mps(self, device: torch.device) -> None:
         """Move the batch to GPU"""
         self.src = self.src.to(device)
         self.src_length = self.src_length.to(device)

@@ -106,7 +106,8 @@ class TrainManager:
         self.num_workers = num_workers
         if self.device.type == "cuda":
             self.model.to(self.device)
-
+        if self.device.type == "mps":
+            self.model.to(self.device)
         # optimization
         self.clip_grad_fun = build_gradient_clipper(config=cfg["training"])
         self.optimizer = build_optimizer(config=cfg["training"],
@@ -116,7 +117,7 @@ class TrainManager:
         self.fp16: bool = fp16  # True or False for scaler
         self.scaler = torch.cuda.amp.GradScaler(enabled=self.fp16)
         if self.fp16:
-            self.dtype = torch.float16 if self.device.type == "cuda" else torch.bfloat16
+            self.dtype = torch.float16 if self.device.type == "mps" else torch.bfloat16
         else:
             self.dtype = torch.get_default_dtype()
 
@@ -339,7 +340,7 @@ class TrainManager:
             logger.info("Reset data iterator (random seed: {%d}).", self.seed)
 
         # move to gpu
-        if self.device.type == "cuda":
+        if self.device.type == "mps":
             self.model.to(self.device)
 
     def init_layers(self, path: Path, layer: str) -> None:
@@ -570,7 +571,7 @@ class TrainManager:
         # reactivate training
         self.model.train()
 
-        # This caused training errors with CPU. Experiment if you want to use GPU/cuda
+        # This caused training errors with CPU. Experiment if you want to use GPU/mps
         #print(f"DEBUG:\n \
         #      device type: \t{self.device.type} \
         #      enabled or na?: \t{self.fp16} \
