@@ -154,13 +154,14 @@ class PositionwiseFeedForward(nn.Module):
     def forward(self, x: Tensor) -> Tensor:
         residual = x
         #if self._layer_norm_position == "pre":
-        x = self.layer_norm(x)
+        # x = self.layer_norm(x)
 
         x = self.pwff_layer(x) + self.alpha * residual
-
+        # post-norm
+        x = self.layer_norm(x)
         return x
         #if self._layer_norm_position == "post":
-            #x = self.layer_norm(x)
+
 
 
 
@@ -271,13 +272,13 @@ class TransformerEncoderLayer(nn.Module):
         """
         residual = x
         #if self._layer_norm_position == "pre":
-        x = self.layer_norm(x)
+        #x = self.layer_norm(x)
 
         x, _ = self.src_src_att(x, x, x, mask)
         x = self.dropout(x) + self.alpha * residual
 
         #if self._layer_norm_position == "post":
-           # x = self.layer_norm(x)
+        x = self.layer_norm(x)
 
         out = self.feed_forward(x)
         return out
@@ -320,6 +321,7 @@ class TransformerDecoderLayer(nn.Module):
 
         self.trg_trg_att = MultiHeadedAttention(num_heads, size, dropout=dropout)
         self.src_trg_att = MultiHeadedAttention(num_heads, size, dropout=dropout)
+        layer_norm = "post"
 
         self.feed_forward = PositionwiseFeedForward(
             size,
@@ -372,18 +374,18 @@ class TransformerDecoderLayer(nn.Module):
         # 1. target-target self-attention
         residual = x
         #if self._layer_norm_position == "pre":
-        x = self.x_layer_norm(x)
+        #x = self.x_layer_norm(x)
 
         h1, _ = self.trg_trg_att(x, x, x, mask=trg_mask)
         h1 = self.dropout(h1) + self.alpha * residual
 
         #   if self._layer_norm_position == "post":
-        #       h1 = self.x_layer_norm(h1)
+        h1 = self.x_layer_norm(h1)
 
         # 2. source-target cross-attention
         h1_residual = h1
         #if self._layer_norm_position == "pre":
-        h1 = self.dec_layer_norm(h1)
+        #h1 = self.dec_layer_norm(h1)
 
         h2, att = self.src_trg_att(memory,
                                    memory,
@@ -393,7 +395,7 @@ class TransformerDecoderLayer(nn.Module):
         h2 = self.dropout(h2) + self.alpha * h1_residual
 
         #if self._layer_norm_position == "post":
-          #  h2 = self.dec_layer_norm(h2)
+        h2 = self.dec_layer_norm(h2)
 
         # 3. final position-wise feed-forward layer
         out = self.feed_forward(h2)
